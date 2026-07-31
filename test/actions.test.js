@@ -185,6 +185,19 @@ test("Close with commentではなく通常のコメントボタンを選ぶ", ()
   assert.equal(findCommentSubmitButton(textarea).textContent, "コメント");
 });
 
+test("Reopen with commentではなく通常のコメントボタンを選ぶ", () => {
+  const dom = new JSDOM(`
+    <form class="js-new-comment-form">
+      <textarea name="comment[body]"></textarea>
+      <button type="submit" name="comment_and_reopen">コメントして再オープン</button>
+      <button type="submit">コメント</button>
+    </form>
+  `);
+  const { document } = dom.window;
+  const textarea = findCommentTextArea(document);
+  assert.equal(findCommentSubmitButton(textarea).textContent, "コメント");
+});
+
 test("安全に区別できない送信ボタンは選ばない", () => {
   const dom = new JSDOM(`
     <form class="js-new-comment-form">

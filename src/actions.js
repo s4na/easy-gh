@@ -55,7 +55,9 @@ function findCommentSubmitButton(textarea) {
       const actionAttributes = [button.name, button.value, button.dataset.action]
         .filter(Boolean)
         .join(" ");
-      return !/(close|merge)/i.test(actionAttributes);
+      return !/(close|merge|(?:re)?open|lock|unlock|convert|draft|delete)/i.test(
+        actionAttributes,
+      );
     },
   );
   const explicitlyComment = candidates.find((button) =>
