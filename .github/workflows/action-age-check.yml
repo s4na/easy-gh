@@ -1,0 +1,21 @@
+name: Action age check
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+
+permissions:
+  contents: read
+
+jobs:
+  action-age-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: s4na/action-age-check@a441cca18c7f63dafa495465a91e554be83d8a3b # main
+        with:
+          min-age: 1w
+          allow: s4na/action-age-check
