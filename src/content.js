@@ -3,6 +3,7 @@ const {
   findApproveControl,
   findCommentSubmitButton,
   findCommentTextArea,
+  findChangedVisibleElement,
   findReviewSubmitButton,
   findReviewToggle,
   getPullRequestBasePath,
@@ -11,6 +12,7 @@ const {
   isPendingActionFresh,
   isReviewSubmissionComplete,
   shouldBlockNavigation,
+  snapshotElementText,
   setTextAreaValue,
 } = EasyGh;
 
@@ -35,16 +37,22 @@ async function waitFor(getElement, timeoutMs = WAIT_TIMEOUT_MS) {
   throw new Error("GitHubの操作画面が見つかりませんでした");
 }
 
-function visibleError() {
-  return [...document.querySelectorAll(".flash-error, .flash.flash-error")].find(
-    (element) => element.getClientRects().length > 0,
+function snapshotErrors() {
+  return snapshotElementText(document, ".flash-error, .flash.flash-error");
+}
+
+function visibleError(previousErrors) {
+  return findChangedVisibleElement(
+    document,
+    ".flash-error, .flash.flash-error",
+    previousErrors,
   );
 }
 
-async function waitForSubmission(successCondition) {
+async function waitForSubmission(successCondition, previousErrors) {
   const deadline = Date.now() + WAIT_TIMEOUT_MS;
   while (Date.now() < deadline) {
-    const error = visibleError();
+    const error = visibleError(previousErrors);
     if (error) throw new Error(error.textContent.trim() || "GitHubで操作に失敗しました");
     if (successCondition()) return;
     await delay(POLL_INTERVAL_MS);
@@ -116,8 +124,12 @@ async function approvePullRequest() {
   approve.click();
 
   const submit = await waitFor(() => findReviewSubmitButton(approve));
+  const previousErrors = snapshotErrors();
   submit.click();
-  await waitForSubmission(() => isReviewSubmissionComplete(submit, approve));
+  await waitForSubmission(
+    () => isReviewSubmissionComplete(submit, approve),
+    previousErrors,
+  );
   showStatus("Approveしました");
 }
 
@@ -142,12 +154,14 @@ async function requestCodexReview() {
     (comment) => comment.textContent.trim() === CODEX_COMMENT,
   ).length;
   const submit = await waitFor(() => findCommentSubmitButton(textarea));
+  const previousErrors = snapshotErrors();
   submit.click();
   await waitForSubmission(
     () =>
       [...document.querySelectorAll(".comment-body")].filter(
         (comment) => comment.textContent.trim() === CODEX_COMMENT,
       ).length > existingComments,
+    previousErrors,
   );
   showStatus("@codexを投稿しました");
 }

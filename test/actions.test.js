@@ -10,6 +10,7 @@ const {
   findApproveControl,
   findCommentSubmitButton,
   findCommentTextArea,
+  findChangedVisibleElement,
   findEnabledControl,
   findReviewSubmitButton,
   findReviewToggle,
@@ -21,6 +22,7 @@ const {
   isEnabledControl,
   isReviewSubmissionComplete,
   shouldBlockNavigation,
+  snapshotElementText,
   setTextAreaValue,
 } = globalThis.EasyGh;
 
@@ -154,4 +156,35 @@ test("aria-disabledの文言フォールバックも有効になるまで検出�
   assert.equal(findReviewToggle(dom.window.document), null);
   button.setAttribute("aria-disabled", "false");
   assert.equal(findReviewToggle(dom.window.document), button);
+});
+
+test("aria-disabledの送信ボタンも有効になるまで検出しない", () => {
+  const dom = new JSDOM(`
+    <form class="js-new-comment-form">
+      <textarea name="comment[body]"></textarea>
+      <button type="submit" aria-disabled="true">コメント</button>
+    </form>
+  `);
+  const { document } = dom.window;
+  const textarea = findCommentTextArea(document);
+  assert.equal(findCommentSubmitButton(textarea), null);
+  document.querySelector("button").setAttribute("aria-disabled", "false");
+  assert.equal(findCommentSubmitButton(textarea).textContent, "コメント");
+});
+
+test("操作前からあるエラーは、内容が変わるまで新規エラーにしない", () => {
+  const dom = new JSDOM('<div class="flash-error">以前のエラー</div>');
+  const { document } = dom.window;
+  const error = document.querySelector(".flash-error");
+  error.getClientRects = () => [{}];
+  const snapshot = snapshotElementText(document, ".flash-error");
+  assert.equal(
+    findChangedVisibleElement(document, ".flash-error", snapshot),
+    null,
+  );
+  error.textContent = "今回のエラー";
+  assert.equal(
+    findChangedVisibleElement(document, ".flash-error", snapshot),
+    error,
+  );
 });

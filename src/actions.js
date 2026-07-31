@@ -47,7 +47,7 @@ function findCommentTextArea(root) {
 
 function findCommentSubmitButton(textarea) {
   const form = textarea.closest("form");
-  return form?.querySelector('button[type="submit"]:not([disabled])') || null;
+  return form ? findEnabledControl(form, 'button[type="submit"]') : null;
 }
 
 function hasCommentDraft(textarea) {
@@ -70,6 +70,25 @@ function isPendingActionFresh(pending, now, ttlMilliseconds) {
   );
 }
 
+function snapshotElementText(root, selector) {
+  return new Map(
+    [...root.querySelectorAll(selector)].map((element) => [
+      element,
+      element.textContent,
+    ]),
+  );
+}
+
+function findChangedVisibleElement(root, selector, snapshot) {
+  return (
+    [...root.querySelectorAll(selector)].find(
+      (element) =>
+        element.getClientRects().length > 0 &&
+        (!snapshot.has(element) || snapshot.get(element) !== element.textContent),
+    ) || null
+  );
+}
+
 function findApproveControl(root) {
   return (
     root.querySelector('input[type="radio"][value="approve"]') ||
@@ -89,7 +108,7 @@ function findReviewToggle(root) {
 
 function findReviewSubmitButton(approveControl) {
   const form = approveControl.closest("form");
-  return form?.querySelector('button[type="submit"]:not([disabled])') || null;
+  return form ? findEnabledControl(form, 'button[type="submit"]') : null;
 }
 
 function isReviewSubmissionComplete(submit, approveControl) {
@@ -111,6 +130,7 @@ globalThis.EasyGh = Object.freeze({
   findCommentSubmitButton,
   findCommentTextArea,
   findEnabledControl,
+  findChangedVisibleElement,
   findReviewSubmitButton,
   findReviewToggle,
   getPullRequestBasePath,
@@ -122,4 +142,5 @@ globalThis.EasyGh = Object.freeze({
   isReviewSubmissionComplete,
   shouldBlockNavigation,
   setTextAreaValue,
+  snapshotElementText,
 });

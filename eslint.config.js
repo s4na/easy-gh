@@ -20,6 +20,7 @@ export default [
         EasyGh: "readonly",
         globalThis: "readonly",
         JSON: "readonly",
+        Map: "readonly",
       },
     },
   },
