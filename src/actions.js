@@ -10,20 +10,22 @@ function getPullRequestBasePath(pathname) {
 
 function findButtonByText(root, pattern) {
   return [...root.querySelectorAll("button")].find(
-    (button) => !button.disabled && pattern.test(button.textContent.trim()),
+    (button) =>
+      isEnabledControl(button) && pattern.test(button.textContent.trim()),
+  );
+}
+
+function isEnabledControl(element) {
+  return (
+    element !== null &&
+    !element.matches(":disabled") &&
+    element.getAttribute("aria-disabled") !== "true"
   );
 }
 
 function findEnabledControl(root, selector) {
   const element = root.querySelector(selector);
-  if (
-    !element ||
-    element.matches(":disabled") ||
-    element.getAttribute("aria-disabled") === "true"
-  ) {
-    return null;
-  }
-  return element;
+  return isEnabledControl(element) ? element : null;
 }
 
 function setTextAreaValue(textarea, value) {
@@ -116,6 +118,7 @@ globalThis.EasyGh = Object.freeze({
   hasPageDraft,
   isPullRequestPath,
   isPendingActionFresh,
+  isEnabledControl,
   isReviewSubmissionComplete,
   shouldBlockNavigation,
   setTextAreaValue,

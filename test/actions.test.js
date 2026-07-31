@@ -18,6 +18,7 @@ const {
   hasPageDraft,
   isPullRequestPath,
   isPendingActionFresh,
+  isEnabledControl,
   isReviewSubmissionComplete,
   shouldBlockNavigation,
   setTextAreaValue,
@@ -142,4 +143,15 @@ test("disabledのReview changesも有効になるまで検出しない", () => {
   assert.equal(findReviewToggle(document), null);
   document.querySelector("button").disabled = false;
   assert.equal(findReviewToggle(document).textContent, "変更をレビュー");
+});
+
+test("aria-disabledの文言フォールバックも有効になるまで検出しない", () => {
+  const dom = new JSDOM(
+    '<button aria-disabled="true">Review changes</button>',
+  );
+  const button = dom.window.document.querySelector("button");
+  assert.equal(isEnabledControl(button), false);
+  assert.equal(findReviewToggle(dom.window.document), null);
+  button.setAttribute("aria-disabled", "false");
+  assert.equal(findReviewToggle(dom.window.document), button);
 });
