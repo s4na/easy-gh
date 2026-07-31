@@ -40,6 +40,18 @@ function hasCommentDraft(textarea) {
   return textarea.value.trim().length > 0;
 }
 
+function hasPageDraft(root) {
+  return [...root.querySelectorAll("textarea")].some(hasCommentDraft);
+}
+
+function isPendingActionFresh(pending, now, ttlMilliseconds) {
+  return (
+    typeof pending?.createdAt === "number" &&
+    now >= pending.createdAt &&
+    now - pending.createdAt <= ttlMilliseconds
+  );
+}
+
 function findApproveControl(root) {
   return (
     root.querySelector('input[type="radio"][value="approve"]') ||
@@ -83,7 +95,9 @@ globalThis.EasyGh = Object.freeze({
   findReviewToggle,
   getPullRequestBasePath,
   hasCommentDraft,
+  hasPageDraft,
   isPullRequestPath,
+  isPendingActionFresh,
   isReviewSubmissionComplete,
   setTextAreaValue,
 });

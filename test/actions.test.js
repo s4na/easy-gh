@@ -14,7 +14,9 @@ const {
   findReviewToggle,
   getPullRequestBasePath,
   hasCommentDraft,
+  hasPageDraft,
   isPullRequestPath,
+  isPendingActionFresh,
   isReviewSubmissionComplete,
   setTextAreaValue,
 } = globalThis.EasyGh;
@@ -83,6 +85,21 @@ test("既存のコメント下書きを検出する", () => {
   assert.equal(hasCommentDraft(textarea), true);
   textarea.value = "   ";
   assert.equal(hasCommentDraft(textarea), false);
+});
+
+test("現在のタブにあるインラインコメント下書きを検出する", () => {
+  const dom = new JSDOM(`
+    <textarea name="review[body]">インライン下書き</textarea>
+    <textarea name="comment[body]"></textarea>
+  `);
+  assert.equal(hasPageDraft(dom.window.document), true);
+});
+
+test("保留操作は短時間だけ再開する", () => {
+  const now = 100_000;
+  assert.equal(isPendingActionFresh({ createdAt: now - 1_000 }, now, 30_000), true);
+  assert.equal(isPendingActionFresh({ createdAt: now - 30_001 }, now, 30_000), false);
+  assert.equal(isPendingActionFresh({ createdAt: now + 1 }, now, 30_000), false);
 });
 
 test("disabledの送信ボタンは有効になるまで検出しない", () => {

@@ -7,7 +7,9 @@ const {
   findReviewToggle,
   getPullRequestBasePath,
   hasCommentDraft,
+  hasPageDraft,
   isPullRequestPath,
+  isPendingActionFresh,
   isReviewSubmissionComplete,
   setTextAreaValue,
 } = EasyGh;
@@ -17,6 +19,7 @@ const STATUS_ID = "easy-gh-status";
 const WAIT_TIMEOUT_MS = 5_000;
 const POLL_INTERVAL_MS = 100;
 const PENDING_ACTION_KEY = "easy-gh-pending-action";
+const PENDING_ACTION_TTL_MS = 30_000;
 
 function delay(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -57,7 +60,7 @@ function navigateToTab(tab, action) {
 
   window.sessionStorage.setItem(
     PENDING_ACTION_KEY,
-    JSON.stringify({ action, targetPath }),
+    JSON.stringify({ action, targetPath, createdAt: Date.now() }),
   );
   window.location.assign(targetPath);
   return true;
@@ -109,6 +112,10 @@ async function approvePullRequest() {
 }
 
 async function requestCodexReview() {
+  const basePath = getPullRequestBasePath(window.location.pathname);
+  if (window.location.pathname !== basePath && hasPageDraft(document)) {
+    throw new Error("入力中のコメントがあるため、ページを移動しませんでした");
+  }
   if (navigateToTab("", "codex")) return;
 
   const textarea = await waitFor(() => findCommentTextArea(document));
@@ -176,7 +183,12 @@ function render() {
   window.sessionStorage.removeItem(PENDING_ACTION_KEY);
   try {
     const pending = JSON.parse(pendingText);
-    if (pending.targetPath !== window.location.pathname) return;
+    if (
+      pending.targetPath !== window.location.pathname ||
+      !isPendingActionFresh(pending, Date.now(), PENDING_ACTION_TTL_MS)
+    ) {
+      return;
+    }
     const button = actions.children[pending.action === "approve" ? 0 : 1];
     const action = pending.action === "approve" ? approvePullRequest : requestCodexReview;
     runWithBusyState(button, action);
