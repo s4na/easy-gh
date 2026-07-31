@@ -19,6 +19,7 @@ const {
 const ACTIONS_ID = "easy-gh-actions";
 const STATUS_ID = "easy-gh-status";
 const WAIT_TIMEOUT_MS = 5_000;
+const SUBMISSION_TIMEOUT_MS = 30_000;
 const POLL_INTERVAL_MS = 100;
 const PENDING_ACTION_KEY = "easy-gh-pending-action";
 const PENDING_ACTION_TTL_MS = 30_000;
@@ -50,7 +51,7 @@ function visibleError(previousErrors) {
 }
 
 async function waitForSubmission(successCondition, previousErrors) {
-  const deadline = Date.now() + WAIT_TIMEOUT_MS;
+  const deadline = Date.now() + SUBMISSION_TIMEOUT_MS;
   while (Date.now() < deadline) {
     const error = visibleError(previousErrors);
     if (error) throw new Error(error.textContent.trim() || "GitHubで操作に失敗しました");

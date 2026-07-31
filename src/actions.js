@@ -47,7 +47,26 @@ function findCommentTextArea(root) {
 
 function findCommentSubmitButton(textarea) {
   const form = textarea.closest("form");
-  return form ? findEnabledControl(form, 'button[type="submit"]') : null;
+  if (!form) return null;
+
+  const candidates = [...form.querySelectorAll('button[type="submit"]')].filter(
+    (button) => {
+      if (!isEnabledControl(button)) return false;
+      const actionAttributes = [button.name, button.value, button.dataset.action]
+        .filter(Boolean)
+        .join(" ");
+      return !/(close|merge)/i.test(actionAttributes);
+    },
+  );
+  const explicitlyComment = candidates.find((button) =>
+    /comment/i.test([button.name, button.value, button.dataset.action].join(" ")),
+  );
+  if (explicitlyComment) return explicitlyComment;
+
+  const unnamed = candidates.filter(
+    (button) => !button.name && !button.value && !button.dataset.action,
+  );
+  return unnamed.length === 1 ? unnamed[0] : null;
 }
 
 function hasCommentDraft(textarea) {

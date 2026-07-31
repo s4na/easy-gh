@@ -172,6 +172,31 @@ test("aria-disabledの送信ボタンも有効になるまで検出しない", (
   assert.equal(findCommentSubmitButton(textarea).textContent, "コメント");
 });
 
+test("Close with commentではなく通常のコメントボタンを選ぶ", () => {
+  const dom = new JSDOM(`
+    <form class="js-new-comment-form">
+      <textarea name="comment[body]"></textarea>
+      <button type="submit" name="comment_and_close" value="close">コメントして閉じる</button>
+      <button type="submit">コメント</button>
+    </form>
+  `);
+  const { document } = dom.window;
+  const textarea = findCommentTextArea(document);
+  assert.equal(findCommentSubmitButton(textarea).textContent, "コメント");
+});
+
+test("安全に区別できない送信ボタンは選ばない", () => {
+  const dom = new JSDOM(`
+    <form class="js-new-comment-form">
+      <textarea name="comment[body]"></textarea>
+      <button type="submit">候補1</button>
+      <button type="submit">候補2</button>
+    </form>
+  `);
+  const textarea = findCommentTextArea(dom.window.document);
+  assert.equal(findCommentSubmitButton(textarea), null);
+});
+
 test("操作前からあるエラーは、内容が変わるまで新規エラーにしない", () => {
   const dom = new JSDOM('<div class="flash-error">以前のエラー</div>');
   const { document } = dom.window;
