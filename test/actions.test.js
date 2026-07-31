@@ -10,6 +10,7 @@ const {
   findApproveControl,
   findCommentSubmitButton,
   findCommentTextArea,
+  findEnabledControl,
   findReviewSubmitButton,
   findReviewToggle,
   getPullRequestBasePath,
@@ -130,4 +131,15 @@ test("disabledの送信ボタンは有効になるまで検出しない", () => 
   assert.equal(findCommentSubmitButton(textarea), null);
   dom.window.document.querySelector("button").disabled = false;
   assert.equal(findCommentSubmitButton(textarea).textContent, "コメント");
+});
+
+test("disabledのReview changesも有効になるまで検出しない", () => {
+  const dom = new JSDOM(
+    '<button class="js-reviews-toggle" disabled>変更をレビュー</button>',
+  );
+  const { document } = dom.window;
+  assert.equal(findEnabledControl(document, ".js-reviews-toggle"), null);
+  assert.equal(findReviewToggle(document), null);
+  document.querySelector("button").disabled = false;
+  assert.equal(findReviewToggle(document).textContent, "変更をレビュー");
 });

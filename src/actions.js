@@ -14,6 +14,18 @@ function findButtonByText(root, pattern) {
   );
 }
 
+function findEnabledControl(root, selector) {
+  const element = root.querySelector(selector);
+  if (
+    !element ||
+    element.matches(":disabled") ||
+    element.getAttribute("aria-disabled") === "true"
+  ) {
+    return null;
+  }
+  return element;
+}
+
 function setTextAreaValue(textarea, value) {
   const view = textarea.ownerDocument.defaultView;
   const setter = Object.getOwnPropertyDescriptor(
@@ -65,10 +77,11 @@ function findApproveControl(root) {
 
 function findReviewToggle(root) {
   return (
-    root.querySelector(".js-reviews-toggle") ||
-    root.querySelector('[data-testid="review-changes-button"]') ||
-    root.querySelector('[aria-haspopup="dialog"][data-hotkey="v"]') ||
-    findButtonByText(root, /^(Review changes|変更をレビュー)$/i)
+    findEnabledControl(root, ".js-reviews-toggle") ||
+    findEnabledControl(root, '[data-testid="review-changes-button"]') ||
+    findEnabledControl(root, '[aria-haspopup="dialog"][data-hotkey="v"]') ||
+    findButtonByText(root, /^(Review changes|変更をレビュー)$/i) ||
+    null
   );
 }
 
@@ -95,6 +108,7 @@ globalThis.EasyGh = Object.freeze({
   findButtonByText,
   findCommentSubmitButton,
   findCommentTextArea,
+  findEnabledControl,
   findReviewSubmitButton,
   findReviewToggle,
   getPullRequestBasePath,
