@@ -8,10 +8,14 @@ await import("../src/actions.js");
 const {
   CODEX_COMMENT,
   findApproveControl,
-  findButtonByText,
   findCommentSubmitButton,
   findCommentTextArea,
+  findReviewSubmitButton,
+  findReviewToggle,
+  getPullRequestBasePath,
+  hasCommentDraft,
   isPullRequestPath,
+  isReviewSubmissionComplete,
   setTextAreaValue,
 } = globalThis.EasyGh;
 
@@ -19,30 +23,37 @@ test("PRのURLだけを対象にする", () => {
   assert.equal(isPullRequestPath("/s4na/easy-gh/pull/12"), true);
   assert.equal(isPullRequestPath("/s4na/easy-gh/pull/12/files"), true);
   assert.equal(isPullRequestPath("/s4na/easy-gh/issues/12"), false);
+  assert.equal(
+    getPullRequestBasePath("/s4na/easy-gh/pull/12/files"),
+    "/s4na/easy-gh/pull/12",
+  );
 });
 
 test("GitHubのレビュー操作を検出する", () => {
   const dom = new JSDOM(`
-    <button>Review changes</button>
-    <input type="radio" value="approve">
-    <button>Submit review</button>
+    <button class="js-reviews-toggle">変更をレビュー</button>
+    <details open>
+      <form>
+        <input type="radio" value="approve">
+        <button type="submit">レビューを送信</button>
+      </form>
+    </details>
   `);
   const { document } = dom.window;
 
-  assert.equal(
-    findButtonByText(document, /Review changes/i).textContent,
-    "Review changes",
-  );
-  assert.equal(findApproveControl(document).value, "approve");
-  assert.equal(
-    findButtonByText(document, /^Submit review$/i).textContent,
-    "Submit review",
-  );
+  assert.equal(findReviewToggle(document).textContent, "変更をレビュー");
+  const approve = findApproveControl(document);
+  assert.equal(approve.value, "approve");
+  const submit = findReviewSubmitButton(approve);
+  assert.equal(submit.textContent, "レビューを送信");
+  assert.equal(isReviewSubmissionComplete(submit, approve), false);
+  document.querySelector("details").open = false;
+  assert.equal(isReviewSubmissionComplete(submit, approve), true);
 });
 
 test("コメント欄へ@codexだけを入力して投稿ボタンを検出する", () => {
   const dom = new JSDOM(`
-    <form>
+    <form class="js-new-comment-form">
       <textarea name="comment[body]"></textarea>
       <button type="submit">Comment</button>
     </form>
@@ -59,4 +70,30 @@ test("コメント欄へ@codexだけを入力して投稿ボタンを検出す�
   assert.equal(textarea.value, "@codex");
   assert.equal(inputFired, true);
   assert.equal(findCommentSubmitButton(textarea).textContent, "Comment");
+});
+
+test("無関係なtextareaをコメント欄として扱わない", () => {
+  const dom = new JSDOM('<textarea name="review[body]"></textarea>');
+  assert.equal(findCommentTextArea(dom.window.document), null);
+});
+
+test("既存のコメント下書きを検出する", () => {
+  const dom = new JSDOM('<textarea>書きかけ</textarea>');
+  const textarea = dom.window.document.querySelector("textarea");
+  assert.equal(hasCommentDraft(textarea), true);
+  textarea.value = "   ";
+  assert.equal(hasCommentDraft(textarea), false);
+});
+
+test("disabledの送信ボタンは有効になるまで検出しない", () => {
+  const dom = new JSDOM(`
+    <form class="js-new-comment-form">
+      <textarea name="comment[body]"></textarea>
+      <button type="submit" disabled>コメント</button>
+    </form>
+  `);
+  const textarea = findCommentTextArea(dom.window.document);
+  assert.equal(findCommentSubmitButton(textarea), null);
+  dom.window.document.querySelector("button").disabled = false;
+  assert.equal(findCommentSubmitButton(textarea).textContent, "コメント");
 });

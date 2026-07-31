@@ -4,6 +4,10 @@ function isPullRequestPath(pathname) {
   return /^\/[^/]+\/[^/]+\/pull\/\d+(?:\/|$)/.test(pathname);
 }
 
+function getPullRequestBasePath(pathname) {
+  return pathname.match(/^\/[^/]+\/[^/]+\/pull\/\d+/)?.[0] || null;
+}
+
 function findButtonByText(root, pattern) {
   return [...root.querySelectorAll("button")].find(
     (button) => !button.disabled && pattern.test(button.textContent.trim()),
@@ -22,16 +26,18 @@ function setTextAreaValue(textarea, value) {
 }
 
 function findCommentTextArea(root) {
-  return (
-    root.querySelector('textarea[name="comment[body]"]') ||
-    root.querySelector('textarea[placeholder*="comment" i]') ||
-    root.querySelector("textarea")
+  return root.querySelector(
+    'form.js-new-comment-form textarea[name="comment[body]"], form[action$="/comments"] textarea[name="comment[body]"]',
   );
 }
 
 function findCommentSubmitButton(textarea) {
-  const form = textarea.closest("form") || textarea.ownerDocument;
-  return findButtonByText(form, /^(Comment|Add comment)$/i);
+  const form = textarea.closest("form");
+  return form?.querySelector('button[type="submit"]:not([disabled])') || null;
+}
+
+function hasCommentDraft(textarea) {
+  return textarea.value.trim().length > 0;
 }
 
 function findApproveControl(root) {
@@ -41,12 +47,43 @@ function findApproveControl(root) {
   );
 }
 
+function findReviewToggle(root) {
+  return (
+    root.querySelector(".js-reviews-toggle") ||
+    root.querySelector('[data-testid="review-changes-button"]') ||
+    root.querySelector('[aria-haspopup="dialog"][data-hotkey="v"]') ||
+    findButtonByText(root, /^(Review changes|変更をレビュー)$/i)
+  );
+}
+
+function findReviewSubmitButton(approveControl) {
+  const form = approveControl.closest("form");
+  return form?.querySelector('button[type="submit"]:not([disabled])') || null;
+}
+
+function isReviewSubmissionComplete(submit, approveControl) {
+  if (!submit.isConnected || !approveControl.isConnected) return true;
+  const container = submit.closest('[role="dialog"], details');
+  if (!container) return false;
+  return (
+    !container.isConnected ||
+    container.hidden ||
+    container.getAttribute("aria-hidden") === "true" ||
+    (container.tagName === "DETAILS" && !container.open)
+  );
+}
+
 globalThis.EasyGh = Object.freeze({
   CODEX_COMMENT,
   findApproveControl,
   findButtonByText,
   findCommentSubmitButton,
   findCommentTextArea,
+  findReviewSubmitButton,
+  findReviewToggle,
+  getPullRequestBasePath,
+  hasCommentDraft,
   isPullRequestPath,
+  isReviewSubmissionComplete,
   setTextAreaValue,
 });
