@@ -44,6 +44,10 @@ function hasPageDraft(root) {
   return [...root.querySelectorAll("textarea")].some(hasCommentDraft);
 }
 
+function shouldBlockNavigation(root, currentPath, targetPath) {
+  return currentPath !== targetPath && hasPageDraft(root);
+}
+
 function isPendingActionFresh(pending, now, ttlMilliseconds) {
   return (
     typeof pending?.createdAt === "number" &&
@@ -99,5 +103,6 @@ globalThis.EasyGh = Object.freeze({
   isPullRequestPath,
   isPendingActionFresh,
   isReviewSubmissionComplete,
+  shouldBlockNavigation,
   setTextAreaValue,
 });

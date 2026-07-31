@@ -7,10 +7,10 @@ const {
   findReviewToggle,
   getPullRequestBasePath,
   hasCommentDraft,
-  hasPageDraft,
   isPullRequestPath,
   isPendingActionFresh,
   isReviewSubmissionComplete,
+  shouldBlockNavigation,
   setTextAreaValue,
 } = EasyGh;
 
@@ -94,6 +94,16 @@ async function runWithBusyState(button, action) {
 }
 
 async function approvePullRequest() {
+  const basePath = getPullRequestBasePath(window.location.pathname);
+  if (
+    shouldBlockNavigation(
+      document,
+      window.location.pathname,
+      `${basePath}/files`,
+    )
+  ) {
+    throw new Error("入力中のコメントがあるため、ページを移動しませんでした");
+  }
   if (navigateToTab("files", "approve")) return;
 
   const openReview = await waitFor(() => findReviewToggle(document));
@@ -113,7 +123,7 @@ async function approvePullRequest() {
 
 async function requestCodexReview() {
   const basePath = getPullRequestBasePath(window.location.pathname);
-  if (window.location.pathname !== basePath && hasPageDraft(document)) {
+  if (shouldBlockNavigation(document, window.location.pathname, basePath)) {
     throw new Error("入力中のコメントがあるため、ページを移動しませんでした");
   }
   if (navigateToTab("", "codex")) return;

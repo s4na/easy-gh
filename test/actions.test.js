@@ -18,6 +18,7 @@ const {
   isPullRequestPath,
   isPendingActionFresh,
   isReviewSubmissionComplete,
+  shouldBlockNavigation,
   setTextAreaValue,
 } = globalThis.EasyGh;
 
@@ -93,6 +94,22 @@ test("現在のタブにあるインラインコメント下書きを検出す�
     <textarea name="comment[body]"></textarea>
   `);
   assert.equal(hasPageDraft(dom.window.document), true);
+  assert.equal(
+    shouldBlockNavigation(
+      dom.window.document,
+      "/s4na/easy-gh/pull/2",
+      "/s4na/easy-gh/pull/2/files",
+    ),
+    true,
+  );
+  assert.equal(
+    shouldBlockNavigation(
+      dom.window.document,
+      "/s4na/easy-gh/pull/2/files",
+      "/s4na/easy-gh/pull/2/files",
+    ),
+    false,
+  );
 });
 
 test("保留操作は短時間だけ再開する", () => {
