@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Easy GH",
+  "description": "Approve a pull request or request a Codex review with one click.",
+  "version": "0.1.0",
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*/*/pull/*"],
+      "css": ["src/content.css"],
+      "js": ["src/actions.js", "src/content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
