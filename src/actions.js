@@ -140,7 +140,8 @@ function isReviewSubmissionComplete(submit, approveControl) {
     !container.isConnected ||
     container.hidden ||
     container.getAttribute("aria-hidden") === "true" ||
-    (container.tagName === "DETAILS" && !container.open)
+    (container.tagName === "DETAILS" && !container.open) ||
+    (container.tagName === "DIALOG" && !container.open)
   );
 }
 

@@ -58,6 +58,26 @@ test("GitHubのレビュー操作を検出する", () => {
   assert.equal(isReviewSubmissionComplete(submit, approve), true);
 });
 
+test("ネイティブのレビューダイアログが閉じたら送信完了と判定する", () => {
+  const dom = new JSDOM(`
+    <dialog open role="dialog">
+      <form>
+        <input type="radio" value="approve" checked>
+        <button type="submit">Submit review</button>
+      </form>
+    </dialog>
+  `);
+  const { document } = dom.window;
+
+  const dialog = document.querySelector("dialog");
+  const approveControl = document.querySelector('input[value="approve"]');
+  const submit = document.querySelector('button[type="submit"]');
+
+  assert.equal(isReviewSubmissionComplete(submit, approveControl), false);
+  dialog.open = false;
+  assert.equal(isReviewSubmissionComplete(submit, approveControl), true);
+});
+
 test("コメント欄へ@codexだけを入力して投稿ボタンを検出する", () => {
   const dom = new JSDOM(`
     <form class="js-new-comment-form">
