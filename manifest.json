@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "content_scripts": [
     {
-      "matches": ["https://github.com/*/*/pull/*"],
+      "matches": ["https://github.com/*/*"],
       "css": ["src/content.css"],
       "js": ["src/actions.js", "src/content.js"],
       "run_at": "document_idle"
